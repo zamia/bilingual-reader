@@ -1,8 +1,7 @@
-import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import { addScrollListener } from "./scroll.js";
 import { addSelectionListener } from "./selection.js";
-import { translateHtml } from "./translate.js";
+import { AzureTranslator as translator } from "./translate.js";
 
 function createCustomDiv() {
   const customDivWrapper = document.createElement("div");
@@ -43,7 +42,14 @@ function createSplitViewContainer(originalContentWrapper, customDivWrapper) {
   return splitViewContainer;
 }
 
+function addNotranslateClass(element) {
+  const elementsToSkip = element.querySelectorAll('pre, code');
+  elementsToSkip.forEach((element) => {
+    element.classList.add('notranslate');
+  });
 
+  return element;
+}
 
 function loadImageSrcFromDataSrc(element) {
   const images = element.getElementsByTagName('img');
@@ -91,8 +97,9 @@ const pageLayoutUtil = {
   
   async translatePage() {
     // 获取原始内容节点
-    const documentClone = document.cloneNode(true);
-    loadImageSrcFromDataSrc(documentClone);
+    let documentClone = document.cloneNode(true);
+    documentClone = loadImageSrcFromDataSrc(documentClone);
+    documentClone = addNotranslateClass(documentClone);
     
     // 获取页面的 H1 标题
     const originalH1 = documentClone.querySelector("h1");
@@ -103,23 +110,17 @@ const pageLayoutUtil = {
       originalH1.remove();
     }
     
-    const customNodeFilter = {
-      acceptNode: (node) => {
-        if (node.getAttribute && node.getAttribute('data-anchor-id')) {
-          return NodeFilter.FILTER_ACCEPT;
-        }
-        return NodeFilter.FILTER_SKIP;
-      },
-    };
-
-    const reader = new Readability(documentClone, {keepClasses: true});
+    const reader = new Readability(documentClone, {
+      keepClasses: false,
+      classesToPreserve: ["data-anchor-id", "notranslate"]
+    });
     const article = await reader.parse();
 
     // 在解析后的文章内容中插入 H1 元素
     const articleContentWithH1 = h1Html + article.content;
 
     // 翻译整个提取到的文章内容，并保留 HTML 标签
-    const translatedContentHtml = await translateHtml(articleContentWithH1);
+    const translatedContentHtml = await translator.translateHtml(articleContentWithH1);
 
     // 创建一个新的节点，用于存放翻译后的内容
     const translatedContent = document.createElement("div");

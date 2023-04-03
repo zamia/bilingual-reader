@@ -1,11 +1,20 @@
 # <img src="public/icons/icon_48.png" width="45" align="left"> Splittranslator
 
-My Chrome Extension
+Show the origin web content and a translated Reader View at the same screen.
+
 
 ## Features
 
-- Feature 1
-- Feature 2
+- Show original web content and translated content at the same time
+- Only translate the meaning content of the page
+- Scroll synchronizing
+- Show highlighted paragraph
+- Support long article
+
+## Todo
+- 添加对长文章的支持
+- 添加一些配置功能
+- 文章标题、作者、日期显示
 
 ## Install
 

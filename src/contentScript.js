@@ -2,6 +2,8 @@
 
 import pageLayoutUtil from './util.js';
 import "./custom.css";
+import './custom-style.scss';
+
 
 // Content script file will run in the context of web page.
 // With content script you can manipulate the web pages using
