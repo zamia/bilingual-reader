@@ -1,5 +1,8 @@
 'use strict';
 
+import pageLayoutUtil from './util.js';
+import "./custom.css";
+
 // Content script file will run in the context of web page.
 // With content script you can manipulate the web pages using
 // Document Object Model (DOM).
@@ -10,6 +13,8 @@
 
 // For more information on Content Scripts,
 // See https://developer.chrome.com/extensions/content_scripts
+
+
 
 // Log `title` of current active web page
 const pageTitle = document.head.getElementsByTagName('title')[0].innerHTML;
@@ -40,4 +45,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890
   sendResponse({});
   return true;
+});
+
+
+let layoutSplitted = false;
+
+async function splitLayout() {
+  if (!layoutSplitted) {
+    pageLayoutUtil.splitWebPage();
+    await pageLayoutUtil.translatePage();
+  } else {
+    pageLayoutUtil.resetWebPage();
+  }
+  layoutSplitted = !layoutSplitted;
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "splitLayout") {
+    console.log('message received: splitLayout')
+    splitLayout();
+  }
 });

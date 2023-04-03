@@ -94,8 +94,19 @@ import './popup.css';
       }
     });
   }
+  
+  function setupSplit() {
+    var button = document.getElementById('splitButton');
+    button.addEventListener('click', (event) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "splitLayout" });
+      });
+    });
+    console.log('setupSplit called');
+  }
 
   document.addEventListener('DOMContentLoaded', restoreCounter);
+  document.addEventListener('DOMContentLoaded', setupSplit);
 
   // Communicate with background file by sending a message
   chrome.runtime.sendMessage(
