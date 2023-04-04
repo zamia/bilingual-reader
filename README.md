@@ -15,6 +15,7 @@ Show the origin web content and a translated Reader View at the same screen.
 - 添加对长文章的支持
 - 添加一些配置功能
 - 文章标题、作者、日期显示
+- Loading
 
 ## Install
 

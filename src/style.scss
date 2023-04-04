@@ -13,9 +13,11 @@ $light-color: #777;
   font-size: 1.2em;
   line-height: 1.6;
   color: $base-color;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 10px;
+  max-width: 820px;
+  margin: 100px auto 200px;
+  padding: 30px 60px 60px;
+  background-color: white;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2); // 自定义阴影效果
 
   h1,
   h2,
@@ -31,8 +33,13 @@ $light-color: #777;
 
   @for $i from 1 through 6 {
     h#{$i} {
-      font-size: 2.2em - ($i - 1) * 0.3;
+      font-size: 2.2em - ($i - 1) * 0.6;
     }
+  }
+
+  h2,
+  h3 {
+    margin-top: 48px;
   }
 
   p {
@@ -61,6 +68,11 @@ $light-color: #777;
   ol {
     padding-left: 20px;
     margin-bottom: 1.2em;
+    list-style: auto;
+
+    li {
+      margin-top: 0.5em;
+    }
   }
 
   blockquote {
@@ -88,6 +100,18 @@ $light-color: #777;
     }
   }
 
+  >author {
+    margin: 0 auto;
+    display: block;
+    text-align: center;
+    color: #aaa;
+  }
+
+  .excerpt {
+    color: #aaa;
+    margin: 20px auto;
+  }
+
   figure {
     margin: 40px auto;
 
@@ -95,5 +119,10 @@ $light-color: #777;
       color: $light-color;
       text-align: center;
     }
+  }
+
+  .highlighted {
+    background-color: rgba(255, 255, 0, 0.1);
+    border-radius: 4px;
   }
 }

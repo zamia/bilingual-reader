@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const azureKey = "8baf1645a12640b68ee5ffdfd45e010e";
 const azureEndpoint = "https://api.cognitive.microsofttranslator.com/";
+// const azureEndpoint = "https://split-translator-01.cognitiveservices.azure.com/";
 const azureLocation = 'westus2';
 
 export const AzureTranslator = {

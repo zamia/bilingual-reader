@@ -2,6 +2,7 @@ import { Readability } from "@mozilla/readability";
 import { addScrollListener } from "./scroll.js";
 import { addSelectionListener } from "./selection.js";
 import { AzureTranslator as translator } from "./translate.js";
+import parser from "./parser.js";
 
 function createCustomDiv() {
   const customDivWrapper = document.createElement("div");
@@ -64,7 +65,7 @@ function loadImageSrcFromDataSrc(element) {
 }
 
 function addAnchorsToElements() {
-  const elements = document.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6');
+  const elements = document.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
   elements.forEach((element, index) => {
     element.setAttribute('data-anchor-id', `anchor-${index}`);
   });
@@ -101,26 +102,32 @@ const pageLayoutUtil = {
     documentClone = loadImageSrcFromDataSrc(documentClone);
     documentClone = addNotranslateClass(documentClone);
     
-    // 获取页面的 H1 标题
-    const originalH1 = documentClone.querySelector("h1");
-    const h1Html = originalH1 ? originalH1.outerHTML : "";
-
-    // 将 H1 元素从 documentClone 中移除
-    if (originalH1) {
-      originalH1.remove();
-    }
-    
     const reader = new Readability(documentClone, {
       keepClasses: false,
       classesToPreserve: ["data-anchor-id", "notranslate"]
     });
-    const article = await reader.parse();
+    const article = await parser.parse();
 
+    const { title, author, excerpt} = article; 
+    const metaDataHtml = `
+      <h1>${title}</h1>
+      <author class="notranslate">${author}</author>
+      <p class="excerpt">${excerpt}</p>
+    `;
+    const { content } = await reader.parse();
+    
     // 在解析后的文章内容中插入 H1 元素
-    const articleContentWithH1 = h1Html + article.content;
+    const articleContentWithH1 = metaDataHtml + content;
+
+    // 初始化
+    let translatedContentHtml = articleContentWithH1;
 
     // 翻译整个提取到的文章内容，并保留 HTML 标签
-    const translatedContentHtml = await translator.translateHtml(articleContentWithH1);
+    try {
+      translatedContentHtml = await translator.translateHtml(articleContentWithH1);
+    } catch (error) {
+      // TODO: ignore first
+    }
 
     // 创建一个新的节点，用于存放翻译后的内容
     const translatedContent = document.createElement("div");

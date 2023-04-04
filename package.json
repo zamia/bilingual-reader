@@ -1,7 +1,7 @@
 {
-  "name": "SplitTranslator",
+  "name": "split-translator",
   "version": "0.1.0",
-  "description": "My Chrome Extension",
+  "description": "Split screen and view translated content side by side",
   "private": true,
   "scripts": {
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.4.4",
+    "@postlight/parser": "^2.2.3",
     "axios": "^1.3.4",
     "url": "^0.11.0",
     "uuid": "^9.0.0"

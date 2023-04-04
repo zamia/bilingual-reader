@@ -1,0 +1,19 @@
+#original-content-wrapper,
+#custom-div-wrapper {
+  width: 50%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+}
+
+#original-content-wrapper {
+  left: 0;
+}
+
+#custom-div-wrapper {
+  right: 0;
+  padding: 100px 40px 40px;
+  background-color: white;
+  border-left: 1px solid #ccc;
+  background-color: #f9f9f9;
+}

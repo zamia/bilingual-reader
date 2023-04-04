@@ -5,17 +5,13 @@
 // For more information on background script,
 // See https://developer.chrome.com/extensions/background_pages
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'GREETINGS') {
-    const message = `Hi ${
-      sender.tab ? 'Con' : 'Pop'
-    }, my name is Bac. I am from Background. It's great to hear from you.`;
+chrome.action.onClicked.addListener(async (tab) => {
+  console.log('extension icon clicked');
 
-    // Log message coming from the `request` parameter
-    console.log(request.payload.message);
-    // Send a response message
-    sendResponse({
-      message,
-    });
-  }
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["contentScript.js"]
+  }).then(() => console.log("script injected"))
+  .catch((err) => console.warn("unexpected error", err))
 });
+

@@ -1,7 +1,8 @@
 function highlightTranslationOnSelection() {
   const selection = window.getSelection();
-  if (selection.rangeCount === 0) {
-    clearHighlight();    
+  if (selection.isCollapsed) {
+    clearHighlight();
+    return;
   };
 
   const range = selection.getRangeAt(0);
