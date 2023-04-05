@@ -13,13 +13,13 @@ function highlightTranslationOnSelection() {
     selectedNode = selectedNode.parentNode;
   }
   
-  const originalParagraph = selectedNode.closest("[data-anchor-id]");
+  const originalParagraph = selectedNode.closest("[z]");
   if (!originalParagraph) return;
 
-  const anchorId = originalParagraph.getAttribute("data-anchor-id");
+  const anchorId = originalParagraph.getAttribute("z");
 
   const translatedParagraph = document.querySelector(
-    `#custom-div [data-anchor-id="${anchorId}"]`
+    `#custom-div [z="${anchorId}"]`
   );
 
   if (!translatedParagraph) return;

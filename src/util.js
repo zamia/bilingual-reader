@@ -3,16 +3,49 @@ import { addScrollListener } from "./scroll.js";
 import { addSelectionListener } from "./selection.js";
 import { AzureTranslator as translator } from "./translate.js";
 import parser from "./parser.js";
+import { addControlsListener, updateFontSize } from "./controls.js";
+import OptionsUtil from "./options-util.js";
 
 function createCustomDiv() {
   const customDivWrapper = document.createElement("div");
   customDivWrapper.id = "custom-div-wrapper";
   customDivWrapper.style.overflow = "auto";
+  
+  const customControls = document.createElement("div");
+  customControls.id = "custom-controls";
+
+  const minusIconURL = chrome.runtime.getURL('icons/MinusCircleOutlined.svg');
+  const plusIconURL = chrome.runtime.getURL('icons/PlusCircleOutlined.svg');
+  const settingsIconURL = chrome.runtime.getURL('icons/SettingsOutline.svg');
+
+  customControls.innerHTML = `
+    <div id="font-size-controls">
+      <img id="font-size-decrease" src="${minusIconURL}" alt="-" />
+      <span>A</span>
+      <img id="font-size-increase" src="${plusIconURL}" alt="+" />
+    </div>
+    <div id="settings-controls">
+      <img id="settings" src="${settingsIconURL}" alt="+" />
+    </div>
+  `;
 
   const customDiv = document.createElement("div");
   customDiv.id = "custom-div";
+  customDiv.innerHTML = `
+    <div id="loading-overlay">
+      <div class="loader"></div>
+      <div class="text"> Translating ... </div>
+    </div>
+  `
+  const footer = document.createElement("div");
+  footer.classList.add("footer");
+  footer.innerHTML = `
+    <p> A simple product made by <a target="_blank" href="https://twitter.com/medalhuang">@medalhuang</a> & chatGPT </p>
+  `
 
+  customDivWrapper.appendChild(customControls);
   customDivWrapper.appendChild(customDiv);
+  customDivWrapper.appendChild(footer);
 
   return customDivWrapper;
 }
@@ -67,13 +100,26 @@ function loadImageSrcFromDataSrc(element) {
 function addAnchorsToElements() {
   const elements = document.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
   elements.forEach((element, index) => {
-    element.setAttribute('data-anchor-id', `anchor-${index}`);
+    element.setAttribute('z', `${index}`);
   });
+}
+
+function removeAttributesFromParagraphs(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const paragraphs = doc.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
+
+  paragraphs.forEach((paragraph) => {
+    paragraph.removeAttribute('id');
+    paragraph.removeAttribute('data-selectable-paragraph');
+  });
+
+  return doc.documentElement.innerHTML;
 }
 
 const pageLayoutUtil = {
   
-  splitWebPage() {
+  async splitWebPage() {
     const customDivWrapper = createCustomDiv();
     const originalContentWrapper = adjustOriginalContent();
     const splitViewContainer = createSplitViewContainer(
@@ -84,47 +130,61 @@ const pageLayoutUtil = {
 
     addScrollListener();
     addSelectionListener();
-  },
-  resetWebPage() {
-    const splitViewContainer = document.getElementById("split-view-container");
-    const originalContentWrapper = document.getElementById("original-content-wrapper");
+    addControlsListener();
 
-    while (originalContentWrapper.firstChild) {
-      document.body.appendChild(originalContentWrapper.firstChild);
+    // init some ui
+    let userFontSize = await OptionsUtil.getUserFontSize();
+    updateFontSize(userFontSize);
+  },
+
+  showSplit() {
+    const container = document.querySelector("#split-view-container");
+    if (container) {
+      container.classList.remove("hide");
     }
-
-    document.body.removeChild(splitViewContainer);
   },
-  
+
+  hideSplit() {
+    const container = document.querySelector("#split-view-container");
+    if (container) {
+      container.classList.add("hide");
+    }
+  },
+
   async translatePage() {
     // 获取原始内容节点
     let documentClone = document.cloneNode(true);
     documentClone = loadImageSrcFromDataSrc(documentClone);
     documentClone = addNotranslateClass(documentClone);
-    
-    const reader = new Readability(documentClone, {
-      keepClasses: false,
-      classesToPreserve: ["data-anchor-id", "notranslate"]
-    });
-    const article = await parser.parse();
 
+    const article = await parser.parse();
     const { title, author, excerpt} = article; 
     const metaDataHtml = `
       <h1>${title}</h1>
-      <author class="notranslate">${author}</author>
+      <author class="notranslate">${author ? author : ""}</author>
       <p class="excerpt">${excerpt}</p>
     `;
+    console.log(`translate page start`);
+    console.log(metaDataHtml);
+    
+    const reader = new Readability(documentClone, {
+      keepClasses: false,
+      classesToPreserve: ["z", "notranslate"]
+    });
+    
     const { content } = await reader.parse();
     
     // 在解析后的文章内容中插入 H1 元素
     const articleContentWithH1 = metaDataHtml + content;
 
     // 初始化
-    let translatedContentHtml = articleContentWithH1;
+    const cleanedContent = removeAttributesFromParagraphs(articleContentWithH1);
+    let translatedContentHtml = cleanedContent;
 
     // 翻译整个提取到的文章内容，并保留 HTML 标签
     try {
-      translatedContentHtml = await translator.translateHtml(articleContentWithH1);
+      const targetLang = await OptionsUtil.getUserLanguage();
+      translatedContentHtml = await translator.translateHtml(cleanedContent, {targetLang: targetLang});
     } catch (error) {
       // TODO: ignore first
     }

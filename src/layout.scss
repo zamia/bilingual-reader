@@ -12,8 +12,20 @@
 
 #custom-div-wrapper {
   right: 0;
-  padding: 100px 40px 40px;
+  padding: 100px 40px 200px;
   background-color: white;
   border-left: 1px solid #ccc;
   background-color: #f9f9f9;
+}
+
+#split-view-container.hide {
+  #original-content-wrapper {
+    width: 100%;
+    position: static;
+  }
+
+  #custom-div-wrapper {
+    display: none;
+    position: static;
+  }
 }

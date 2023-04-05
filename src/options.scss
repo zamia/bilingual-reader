@@ -1,0 +1,70 @@
+body {
+  background-color: #f0f0f0;
+  font-size: 1.2em;
+}
+
+.container {
+  background-color: #ffffff;
+  color: #666;
+  max-width: 620px;
+  margin: 40px auto;
+  padding: 60px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.brand {
+  margin-bottom: 50px;
+
+  >p {
+    color: #aaa;
+    padding: 0 20px;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    >span {
+      margin-left: 20px;
+      font-size: 1.4em;
+    }
+  }
+}
+
+.form {
+  margin: 20px 0 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ccc;
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  select {
+    min-width: 200px;
+    text-align-last: center;
+    font-size: 0.8em;
+  }
+}
+
+.notice {
+  color: #777;
+  font-size: 16px;
+}
+
+.footer {
+  max-width: 620px;
+  padding: 0 60px;
+  text-align: center;
+  color: #777;
+  margin: 30px auto 30px;
+  font-size: 12px;
+}

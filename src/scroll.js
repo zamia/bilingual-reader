@@ -1,5 +1,5 @@
 function getCurrentAnchor(container) {
-  const anchors = container.querySelectorAll('[data-anchor-id]');
+  const anchors = container.querySelectorAll('[z]');
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   let currentAnchor = anchors[0];
 
@@ -15,8 +15,8 @@ function getCurrentAnchor(container) {
 
 function scrollToTranslatedAnchor(sourceContainer, targetContainer) {
   const currentAnchor = getCurrentAnchor(sourceContainer);
-  const anchorId = currentAnchor.getAttribute('data-anchor-id');
-  const translatedAnchor = targetContainer.querySelector(`[data-anchor-id="${anchorId}"]`);
+  const anchorId = currentAnchor.getAttribute('z');
+  const translatedAnchor = targetContainer.querySelector(`[z="${anchorId}"]`);
 
   if (translatedAnchor) {
     translatedAnchor.scrollIntoView();

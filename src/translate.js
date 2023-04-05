@@ -21,7 +21,7 @@ export const AzureTranslator = {
       params: {
         'api-version': '3.0',
         'textType': 'html',
-        'to': [options['targetLang'] || 'zh-CN'],
+        'to': [options.targetLang || 'zh-CN'],
       },
       data: [{
         'text': text

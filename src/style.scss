@@ -1,6 +1,6 @@
 $font-family: 'Roboto', sans-serif;
 $font-family-code: 'Courier New', monospace;
-$base-color: #333;
+$base-color: #292929;
 $heading-color: #444;
 $code-background-color: #f5f5f5;
 $blockquote-border-color: #ccc;
@@ -8,14 +8,22 @@ $link-color: $base-color;
 $link-hover-color: $base-color;
 $light-color: #777;
 
+$content-max-width: 820px;
+
+#custom-div-wrapper {
+  font-size: 16px;
+}
+
 #custom-div {
+  --font-size: 1.2em;
+
   font-family: $font-family;
-  font-size: 1.2em;
+  font-size: var(--font-size);
   line-height: 1.6;
   color: $base-color;
-  max-width: 820px;
-  margin: 100px auto 200px;
-  padding: 30px 60px 60px;
+  max-width: $content-max-width;
+  margin: 0 auto;
+  padding: 30px 60px 30px;
   background-color: white;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2); // 自定义阴影效果
 
@@ -31,10 +39,20 @@ $light-color: #777;
     font-weight: bold;
   }
 
-  @for $i from 1 through 6 {
-    h#{$i} {
-      font-size: 2.2em - ($i - 1) * 0.6;
-    }
+  h1 {
+    font-size: calc(1.6 * var(--font-size));
+    text-align: center;
+  }
+
+  h2 {
+    font-size: calc(1.4 * var(--font-size));
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: calc(1.2 * var(--font-size));
   }
 
   h2,
@@ -125,4 +143,46 @@ $light-color: #777;
     background-color: rgba(255, 255, 0, 0.1);
     border-radius: 4px;
   }
+}
+
+#custom-controls {
+  padding: 10px;
+  max-width: $content-max-width;
+  margin: 0 auto;
+  opacity: 0.6;
+  display: flex;
+  justify-content: space-between;
+
+  img {
+    width: 1.2em;
+    height: 1.2em;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  #font-size-controls {
+    display: flex;
+    align-items: center;
+
+    >span {
+      margin-left: 10px;
+      margin-right: 10px;
+      font-size: 1.2em;
+    }
+  }
+
+  #settings-controls {
+    display: flex;
+    align-items: center;
+  }
+}
+
+#custom-div-wrapper .footer {
+  max-width: $content-max-width;
+  padding: 0 60px;
+  text-align: center;
+  color: $light-color;
+  margin: 30px auto 30px;
 }

@@ -3,6 +3,7 @@
 const SizePlugin = require('size-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const PATHS = require('./paths');
 
@@ -69,6 +70,11 @@ const common = {
     // Extract CSS into separate files
     new MiniCssExtractPlugin({
       filename: '[name].css',
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'options.html',
+      template: 'src/options.html',
+      chunks: [], // we could put options.js here, but it will compile only options.html changed
     }),
   ],
 };
