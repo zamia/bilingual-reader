@@ -7,7 +7,6 @@ export function updateFontSize(fontSize) {
 
 export async function addControlsListener() {
   let fontSize = await OptionsUtil.getUserFontSize();
-  console.log(fontSize);
 
   const fontSizeDecreaseBtn = document.getElementById('font-size-decrease');
   fontSizeDecreaseBtn.addEventListener('click', () => {
@@ -25,6 +24,12 @@ export async function addControlsListener() {
   const settingsBtn = document.getElementById('settings');
   settingsBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({"action": "OpenOptionsPage"});
+  });
+
+  const refreshBtn = document.getElementById('refresh');
+  refreshBtn.addEventListener('click', () => {
+    console.log("send message refreshLayout");
+    refreshBtn.dispatchEvent(new Event("refreshLayout", { bubbles: true }));
   });
 
 }

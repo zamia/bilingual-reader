@@ -1,40 +1,45 @@
 import axios from "axios";
-import { v4 as uuidv4 } from 'uuid';
 
-const azureKey = "8baf1645a12640b68ee5ffdfd45e010e";
-const azureEndpoint = "https://api.cognitive.microsofttranslator.com/";
-// const azureEndpoint = "https://split-translator-01.cognitiveservices.azure.com/";
-const azureLocation = 'westus2';
+// const azureEndpoint = "https://api.cognitive.microsofttranslator.com/";
+const azureAuthURL = "https://edge.microsoft.com/translate/auth";
+const azureEndpoint = "https://api-edge.cognitive.microsofttranslator.com/";
 
 export const AzureTranslator = {
   async translateHtml(text, options = {}) {
-    const response = await axios({
-      baseURL: azureEndpoint,
-      url: '/translate',
-      method: 'post',
-      headers: {
-        'Ocp-Apim-Subscription-Key': azureKey,
-        'Ocp-Apim-Subscription-Region': azureLocation,
-        'Content-type': 'application/json',
-        'X-ClientTraceId': uuidv4().toString()
-      },
-      params: {
-        'api-version': '3.0',
-        'textType': 'html',
-        'to': [options.targetLang || 'zh-CN'],
-      },
-      data: [{
-        'text': text
-      }],
-      responseType: 'json'
-    });
+    try {
+      const authReponse = await axios.get(azureAuthURL);
+      const authCode = authReponse.data;
 
-    return response.data[0].translations[0].text;
-  },
+      const response = await axios({
+        baseURL: azureEndpoint,
+        url: '/translate',
+        method: 'post',
+        headers: {
+          // 'Ocp-Apim-Subscription-Key': azureKey,
+          // 'Ocp-Apim-Subscription-Region': azureLocation,
+          'Content-type': 'application/json',
+          "authorization": `Bearer ${authCode}`
+        },
+        params: {
+          'api-version': '3.0',
+          'textType': 'html',
+          'to': [options.targetLang || 'zh-CN'],
+        },
+        data: [{
+          'text': text
+        }],
+        responseType: 'json'
+      });
+
+      return response.data[0].translations[0].text;
+    } catch (error) {
+      console.log(error);
+    }
+  }
 };
 
 
-const GoogleApiKey = "AIzaSyCXLK3kpcwEOo4n7wT220bnNKr8VcDRD18"; 
+const GoogleApiKey = ""; 
 export var GoogleTranslator = {
   async translateHtml(text, options = {}) {
     const apiKey = GoogleApiKey;

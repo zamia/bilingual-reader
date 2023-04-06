@@ -1,12 +1,19 @@
-import { Readability } from "@mozilla/readability";
 import { addScrollListener } from "./scroll.js";
 import { addSelectionListener } from "./selection.js";
-import { AzureTranslator as translator } from "./translate.js";
 import parser from "./parser.js";
 import { addControlsListener, updateFontSize } from "./controls.js";
 import OptionsUtil from "./options-util.js";
 
-function createCustomDiv() {
+function showLoading() {
+  const loadingOverlay = document.querySelector('#loading-overlay');
+  loadingOverlay.style.display = 'flex';
+}
+function hideLoading() {
+  const loadingOverlay = document.querySelector('#loading-overlay');
+  loadingOverlay.style.display = 'none';
+}
+
+function createCustomWrapper() {
   const customDivWrapper = document.createElement("div");
   customDivWrapper.id = "custom-div-wrapper";
   customDivWrapper.style.overflow = "auto";
@@ -17,15 +24,19 @@ function createCustomDiv() {
   const minusIconURL = chrome.runtime.getURL('icons/MinusCircleOutlined.svg');
   const plusIconURL = chrome.runtime.getURL('icons/PlusCircleOutlined.svg');
   const settingsIconURL = chrome.runtime.getURL('icons/SettingsOutline.svg');
+  const refreshIconURL = chrome.runtime.getURL('icons/RefreshOutlined.svg');
 
   customControls.innerHTML = `
     <div id="font-size-controls">
       <img id="font-size-decrease" src="${minusIconURL}" alt="-" />
       <span>A</span>
       <img id="font-size-increase" src="${plusIconURL}" alt="+" />
+      <span class="divider"></span>
     </div>
     <div id="settings-controls">
-      <img id="settings" src="${settingsIconURL}" alt="+" />
+      <img id="refresh" src="${refreshIconURL}" alt="refresh" />
+      <span>&nbsp;</span>
+      <img id="settings" src="${settingsIconURL}" alt="preferences" />
     </div>
   `;
 
@@ -50,9 +61,7 @@ function createCustomDiv() {
   return customDivWrapper;
 }
 
-function adjustOriginalContent() {
-  addAnchorsToElements();
-  
+function createOriginalWrapper() {
   const originalContentWrapper = document.createElement("div");
   originalContentWrapper.id = "original-content-wrapper";
   originalContentWrapper.style.overflow = "auto";
@@ -76,67 +85,72 @@ function createSplitViewContainer(originalContentWrapper, customDivWrapper) {
   return splitViewContainer;
 }
 
-function addNotranslateClass(element) {
-  const elementsToSkip = element.querySelectorAll('pre, code');
-  elementsToSkip.forEach((element) => {
-    element.classList.add('notranslate');
-  });
-
-  return element;
-}
-
-function loadImageSrcFromDataSrc(element) {
-  const images = element.getElementsByTagName('img');
-  for (let i = 0; i < images.length; i++) {
-    const img = images[i];
-    const dataSrc = img.getAttribute('data-src');
-    if (dataSrc) {
-      img.setAttribute('src', dataSrc);
-    }
-  }
-  return element;
-}
-
-function addAnchorsToElements() {
-  const elements = document.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
+function addAnchorsToElements(doc) {
+  const elements = doc.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
   elements.forEach((element, index) => {
     element.setAttribute('z', `${index}`);
   });
 }
 
-function removeAttributesFromParagraphs(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const paragraphs = doc.querySelectorAll('p, img, a, h1, h2, h3, h4, h5, h6, ul, ol, li');
-
-  paragraphs.forEach((paragraph) => {
-    paragraph.removeAttribute('id');
-    paragraph.removeAttribute('data-selectable-paragraph');
-  });
-
-  return doc.documentElement.innerHTML;
-}
+function appendToElement(element, className, innerHTML) {
+  const div = document.createElement("div");
+  div.classList.add(className);
+  div.innerHTML = innerHTML;
+  
+  element.appendChild(div);
+};
 
 const pageLayoutUtil = {
+  preProcess() {
+    addAnchorsToElements(document);
+  },
+
+  async parseContent(document) {
+    // clone document 出来分析内容
+    const doc = document.cloneNode(true);
+    const readerContent = await parser.parseDocument(doc);
+    const targetLang = await OptionsUtil.getUserLanguage();
+    const translatedContent = await parser.translateDocument(readerContent, targetLang); 
+    
+    return { readerContent, translatedContent };
+  },
   
-  async splitWebPage() {
-    const customDivWrapper = createCustomDiv();
-    const originalContentWrapper = adjustOriginalContent();
+  async createLayout() {
+      // 构建 layout
     const splitViewContainer = createSplitViewContainer(
-      originalContentWrapper,
-      customDivWrapper
+      createOriginalWrapper(),
+      createCustomWrapper()
     );
     document.body.appendChild(splitViewContainer);
+  
+    // 根据用户配置初始化默认字体大小
+    let userFontSize = await OptionsUtil.getUserFontSize();
+    updateFontSize(userFontSize);
 
+    // UI 控件事件
     addScrollListener();
     addSelectionListener();
     addControlsListener();
-
-    // init some ui
-    let userFontSize = await OptionsUtil.getUserFontSize();
-    updateFontSize(userFontSize);
   },
+  
+  async parseAndFill() {
+    this.preProcess(document);
+    showLoading();
+    const { readerContent, translatedContent } = await this.parseContent(document);
 
+    const customDiv = document.getElementById("custom-div");
+    // appendToElement(customDiv, "reader-content-wrapper", readerContent);
+    appendToElement(customDiv, "translated-content-wrapper", translatedContent);
+    
+    hideLoading(); 
+  },
+  
+  async clearParsedContent() {
+    const customDiv = document.getElementById("custom-div");
+    const elements = customDiv.querySelectorAll(".reader-content-wrapper, .translated-content-wrapper");
+    elements.forEach((e) => e.remove());
+  },
+  
   showSplit() {
     const container = document.querySelector("#split-view-container");
     if (container) {
@@ -149,61 +163,6 @@ const pageLayoutUtil = {
     if (container) {
       container.classList.add("hide");
     }
-  },
-
-  async translatePage() {
-    // 获取原始内容节点
-    let documentClone = document.cloneNode(true);
-    documentClone = loadImageSrcFromDataSrc(documentClone);
-    documentClone = addNotranslateClass(documentClone);
-
-    const article = await parser.parse();
-    const { title, author, excerpt} = article; 
-    const metaDataHtml = `
-      <h1>${title}</h1>
-      <author class="notranslate">${author ? author : ""}</author>
-      <p class="excerpt">${excerpt}</p>
-    `;
-    console.log(`translate page start`);
-    console.log(metaDataHtml);
-    
-    const reader = new Readability(documentClone, {
-      keepClasses: false,
-      classesToPreserve: ["z", "notranslate"]
-    });
-    
-    const { content } = await reader.parse();
-    
-    // 在解析后的文章内容中插入 H1 元素
-    const articleContentWithH1 = metaDataHtml + content;
-
-    // 初始化
-    const cleanedContent = removeAttributesFromParagraphs(articleContentWithH1);
-    let translatedContentHtml = cleanedContent;
-
-    // 翻译整个提取到的文章内容，并保留 HTML 标签
-    try {
-      const targetLang = await OptionsUtil.getUserLanguage();
-      translatedContentHtml = await translator.translateHtml(cleanedContent, {targetLang: targetLang});
-    } catch (error) {
-      // TODO: ignore first
-    }
-
-    // 创建一个新的节点，用于存放翻译后的内容
-    const translatedContent = document.createElement("div");
-    translatedContent.innerHTML = translatedContentHtml;
-
-    const customDiv = document.getElementById('custom-div');
-
-    // 清除原有子元素
-    while (customDiv.firstChild) {
-      customDiv.removeChild(customDiv.firstChild);
-    }
-    
-    // 添加翻译后的子元素
-    Array.from(translatedContent.childNodes).forEach((child) => {
-      customDiv.appendChild(child);
-    });
   },
 };
 

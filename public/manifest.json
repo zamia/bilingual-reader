@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "split-translator",
+  "name": "Bilingual Reader",
   "description": "Split screen and read translated content side by side",
   "version": "1.0",
   "icons": {
@@ -55,8 +55,8 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+S",
-        "mac": "Command+Shift+S"
+        "default": "Ctrl+B",
+        "mac": "Command+B"
       }
     }
   }
