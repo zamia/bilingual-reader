@@ -73,6 +73,8 @@ function createOriginalWrapper() {
   originalContentWrapper.addEventListener('load', async () => {
     console.log("iframe load finished!");
     originalContentWrapper.classList.add("split-translator-loaded");
+    
+    
   });
 
   return originalContentWrapper;
@@ -93,6 +95,7 @@ function addAnchorsToElements(doc) {
   elements.forEach((element, index) => {
     element.setAttribute('z', `${index}`);
   });
+  return doc;
 }
 
 function appendToElement(element, className, innerHTML) {
@@ -163,31 +166,40 @@ function insertAttributes(translatedHtmlString, attributes) {
 async function parseContent(document) {
   console.log(`parseCOntent called`);
 
-  // clone document 出来分析内容
-  const doc = document.cloneNode(true);
+  let doc = document.cloneNode(true);
+  doc = addAnchorsToElements(doc);
   const readerContent = await parser.parseDocument(doc);
+  
+  // 保存一些标签属性，节省翻译的字数
   const { updatedHtmlString: updatedReaderContent, attributes } = extractAttributes(readerContent);
 
   const targetLang = await OptionsUtil.getUserLanguage();
   let translatedContent = await parser.translateDocument(updatedReaderContent, targetLang); 
+  
+  // 恢复标签属性
   translatedContent = insertAttributes(translatedContent, attributes);
   
   return { readerContent, translatedContent };
 }
 
-async function realParseAndFill(iframeDoc) {
-  // pre-process document
-  addAnchorsToElements(iframeDoc);
+function setBackgroundColor(iframeDoc) {
+  // 在 iframe 中获取 body 元素
+  const iframeBody = iframeDoc.body;
 
-  // UI 控件事件
-  addScrollListener(iframeDoc, document.getElementById('custom-div-wrapper'));
-  addSelectionListener(iframeDoc, document.getElementById('custom-div-wrapper'));
+  // 获取 body 的背景颜色
+  const bodyBackgroundColor = window.getComputedStyle(iframeBody).getPropertyValue('background-color');
 
+  // 如果 body 的背景颜色是透明或未设置，则设置为白色
+  if (bodyBackgroundColor === 'rgba(0, 0, 0, 0)' || bodyBackgroundColor === 'transparent') {
+    iframeBody.style.backgroundColor = 'white';
+  }
+}
+
+async function realParseAndFill(doc) {
   showLoading();
-  const { readerContent, translatedContent } = await parseContent(iframeDoc);
+  const { readerContent, translatedContent } = await parseContent(doc);
 
   const customDiv = document.getElementById("custom-div");
-  // appendToElement(customDiv, "reader-content-wrapper", readerContent);
   appendToElement(customDiv, "translated-content-wrapper", translatedContent);
     
   hideLoading();
@@ -214,22 +226,26 @@ const pageLayoutUtil = {
   
   async parseAndFill() {
     console.log("parseAndFill was called!");
-    const iframe = document.getElementById("original-content-wrapper");
+
+    await realParseAndFill(document);
 
     // 定义检查函数
+    const iframe = document.getElementById("original-content-wrapper");
     async function checkIframeLoaded() {
       if (iframe.classList.contains('split-translator-loaded')) {
         // 清除定时器
         clearInterval(checkInterval);
-
+        
         // iframe 加载完成，执行后续操作
-        await realParseAndFill(iframe.contentDocument || iframe.contentWindow.document);
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
+        addScrollListener(iframeDoc, document.getElementById('custom-div-wrapper'));
+        addSelectionListener(iframeDoc, document.getElementById('custom-div-wrapper'));
+        setBackgroundColor(iframeDoc);
+        addAnchorsToElements(iframeDoc);
       }
     }
-
     // 设置定时器，每隔 300 毫秒检查一次
     const checkInterval = setInterval(checkIframeLoaded, 300);
-
   },
   
   async clearParsedContent() {

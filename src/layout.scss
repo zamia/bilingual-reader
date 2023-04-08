@@ -16,7 +16,7 @@ body.split-reader-active {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  z-index: 99999;
+  z-index: 99999999999;
 }
 
 #original-content-wrapper {
@@ -24,6 +24,7 @@ body.split-reader-active {
   overflow-y: auto;
   height: 100%;
   border: none;
+  // background-color: white;
 }
 
 #custom-div-wrapper {
