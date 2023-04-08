@@ -8,25 +8,25 @@ export function updateFontSize(fontSize) {
 export async function addControlsListener() {
   let fontSize = await OptionsUtil.getUserFontSize();
 
-  const fontSizeDecreaseBtn = document.getElementById('font-size-decrease');
+  const fontSizeDecreaseBtn = document.getElementById('split-translator-decrease');
   fontSizeDecreaseBtn.addEventListener('click', () => {
     fontSize -= 0.1;
     updateFontSize(fontSize);
   });
 
-  const fontSizeIncreaseBtn = document.getElementById('font-size-increase');
+  const fontSizeIncreaseBtn = document.getElementById('split-translator-increase');
   fontSizeIncreaseBtn.addEventListener('click', () => {
     fontSize += 0.1;
     console.log(fontSize);
     updateFontSize(fontSize);
   });
 
-  const settingsBtn = document.getElementById('settings');
+  const settingsBtn = document.getElementById('split-translator-settings');
   settingsBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({"action": "OpenOptionsPage"});
   });
 
-  const refreshBtn = document.getElementById('refresh');
+  const refreshBtn = document.getElementById('split-translator-refresh');
   refreshBtn.addEventListener('click', () => {
     console.log("send message refreshLayout");
     refreshBtn.dispatchEvent(new Event("refreshLayout", { bubbles: true }));

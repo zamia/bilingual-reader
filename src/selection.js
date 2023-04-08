@@ -1,7 +1,7 @@
-function highlightTranslationOnSelection() {
-  const selection = window.getSelection();
+function highlightTranslationOnSelection(iframeDoc, customDivWrapper) {
+  const selection = iframeDoc.getSelection();
   if (selection.isCollapsed) {
-    clearHighlight();
+    clearHighlight(customDivWrapper);
     return;
   };
 
@@ -18,7 +18,7 @@ function highlightTranslationOnSelection() {
 
   const anchorId = originalParagraph.getAttribute("z");
 
-  const translatedParagraph = document.querySelector(
+  const translatedParagraph = customDivWrapper.querySelector(
     `#custom-div [z="${anchorId}"]`
   );
 
@@ -28,17 +28,17 @@ function highlightTranslationOnSelection() {
   translatedParagraph.classList.add("highlighted");
 }
 
-function clearHighlight() {
-  const highlighted = document.querySelector("#custom-div .highlighted");
+function clearHighlight(customDivWrapper) {
+  const highlighted = customDivWrapper.querySelector("#custom-div .highlighted");
   if (highlighted) {
     highlighted.classList.remove("highlighted");
   }
 }
 
 // 添加事件监听器
-export function addSelectionListener() {
-  document.addEventListener("selectionchange", () => {
-    clearHighlight();
-    highlightTranslationOnSelection();
+export function addSelectionListener(iframeDoc, customDivWrapper) {
+  iframeDoc.addEventListener("selectionchange", () => {
+    clearHighlight(customDivWrapper);
+    highlightTranslationOnSelection(iframeDoc, customDivWrapper);
   });
 }

@@ -28,15 +28,15 @@ function createCustomWrapper() {
 
   customControls.innerHTML = `
     <div id="font-size-controls">
-      <img id="font-size-decrease" src="${minusIconURL}" alt="-" />
+      <img id="split-translator-decrease" src="${minusIconURL}" alt="-" />
       <span>A</span>
-      <img id="font-size-increase" src="${plusIconURL}" alt="+" />
+      <img id="split-translator-increase" src="${plusIconURL}" alt="+" />
       <span class="divider"></span>
     </div>
     <div id="settings-controls">
-      <img id="refresh" src="${refreshIconURL}" alt="refresh" />
+      <img id="split-translator-refresh" src="${refreshIconURL}" alt="refresh" />
       <span>&nbsp;</span>
-      <img id="settings" src="${settingsIconURL}" alt="preferences" />
+      <img id="split-translator-settings" src="${settingsIconURL}" alt="preferences" />
     </div>
   `;
 
@@ -62,14 +62,17 @@ function createCustomWrapper() {
 }
 
 function createOriginalWrapper() {
-  const originalContentWrapper = document.createElement("div");
+  const originalContentWrapper = document.createElement("iframe");
   originalContentWrapper.id = "original-content-wrapper";
+  originalContentWrapper.src = window.location.href;
   originalContentWrapper.style.overflow = "auto";
-
-  const bodyChildren = Array.from(document.body.childNodes);
-
-  bodyChildren.forEach((child) => {
-    originalContentWrapper.appendChild(child);
+  
+  const originBodyElement = document.body;
+  originBodyElement.classList.add("split-reader-active")
+  
+  originalContentWrapper.addEventListener('load', async () => {
+    console.log("iframe load finished!");
+    originalContentWrapper.classList.add("split-translator-loaded");
   });
 
   return originalContentWrapper;
@@ -100,20 +103,39 @@ function appendToElement(element, className, innerHTML) {
   element.appendChild(div);
 };
 
-const pageLayoutUtil = {
-  preProcess() {
-    addAnchorsToElements(document);
-  },
+async function parseContent(document) {
+  console.log(`parseCOntent called`);
 
-  async parseContent(document) {
-    // clone document 出来分析内容
-    const doc = document.cloneNode(true);
-    const readerContent = await parser.parseDocument(doc);
-    const targetLang = await OptionsUtil.getUserLanguage();
-    const translatedContent = await parser.translateDocument(readerContent, targetLang); 
+  // clone document 出来分析内容
+  const doc = document.cloneNode(true);
+  const readerContent = await parser.parseDocument(doc);
+
+  const targetLang = await OptionsUtil.getUserLanguage();
+  const translatedContent = await parser.translateDocument(readerContent, targetLang); 
+  
+  return { readerContent, translatedContent };
+}
+
+async function realParseAndFill(iframeDoc) {
+  // pre-process document
+  addAnchorsToElements(iframeDoc);
+
+  // UI 控件事件
+  addScrollListener(iframeDoc, document.getElementById('custom-div-wrapper'));
+  addSelectionListener(iframeDoc, document.getElementById('custom-div-wrapper'));
+
+  showLoading();
+  const { readerContent, translatedContent } = await parseContent(iframeDoc);
+
+  const customDiv = document.getElementById("custom-div");
+  // appendToElement(customDiv, "reader-content-wrapper", readerContent);
+  appendToElement(customDiv, "translated-content-wrapper", translatedContent);
     
-    return { readerContent, translatedContent };
-  },
+  hideLoading();
+}
+
+const pageLayoutUtil = {
+
   
   async createLayout() {
       // 构建 layout
@@ -127,22 +149,28 @@ const pageLayoutUtil = {
     let userFontSize = await OptionsUtil.getUserFontSize();
     updateFontSize(userFontSize);
 
-    // UI 控件事件
-    addScrollListener();
-    addSelectionListener();
+    // for custom-div controls
     addControlsListener();
   },
   
   async parseAndFill() {
-    this.preProcess(document);
-    showLoading();
-    const { readerContent, translatedContent } = await this.parseContent(document);
+    console.log("parseAndFill was called!");
+    const iframe = document.getElementById("original-content-wrapper");
 
-    const customDiv = document.getElementById("custom-div");
-    // appendToElement(customDiv, "reader-content-wrapper", readerContent);
-    appendToElement(customDiv, "translated-content-wrapper", translatedContent);
-    
-    hideLoading(); 
+    // 定义检查函数
+    async function checkIframeLoaded() {
+      if (iframe.classList.contains('split-translator-loaded')) {
+        // 清除定时器
+        clearInterval(checkInterval);
+
+        // iframe 加载完成，执行后续操作
+        await realParseAndFill(iframe.contentDocument || iframe.contentWindow.document);
+      }
+    }
+
+    // 设置定时器，每隔 300 毫秒检查一次
+    const checkInterval = setInterval(checkIframeLoaded, 300);
+
   },
   
   async clearParsedContent() {
@@ -156,6 +184,9 @@ const pageLayoutUtil = {
     if (container) {
       container.classList.remove("hide");
     }
+
+    const body = document.body;
+    body.classList.add("split-reader-active");
   },
 
   hideSplit() {
@@ -163,6 +194,8 @@ const pageLayoutUtil = {
     if (container) {
       container.classList.add("hide");
     }
+    const body = document.body;
+    body.classList.remove("split-reader-active");
   },
 };
 

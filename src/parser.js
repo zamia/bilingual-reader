@@ -1,4 +1,3 @@
-import Parser from '@postlight/parser';
 import { Readability } from '@mozilla/readability';
 import { AzureTranslator as translator } from "./translate.js";
 
@@ -35,18 +34,7 @@ function removeAttributesFromParagraphs(html) {
     paragraph.removeAttribute('data-selectable-paragraph');
   });
 
-  return doc.documentElement.innerHTML;
-}
-
-// @postlight/parser 只能处理当前的 document，不接受传参，因此它的调用时机要注意, 否则可能会出错
-async function generateMeta(){
-  const article = await Parser.parse();
-  const {title, author, excerpt} = article; 
-  const metaHtml = `
-    <h1>${title}</h1>
-    <author class="notranslate">${author ? author : ""}</author>
-  `;
-  return metaHtml;
+  return doc.body.innerHTML;
 }
 
 async function generateReaderContent(doc) {
@@ -56,22 +44,25 @@ async function generateReaderContent(doc) {
     keepClasses: false,
     classesToPreserve: ["z", "notranslate"]
   });
-  const { content } = await reader.parse();
-  
-  return content;
+  const parsedContent = await reader.parse();
+  const { title, byline, content } = parsedContent;
+
+  const readerContent = `
+    <h1>${title}</h1>
+    <author class="notranslate">${byline ? byline : ""}</author>
+    <div class="content">${content}</div>
+  `;
+
+  return readerContent;
 }
 
 const parser = {
   async parseDocument(doc) {
-    // 先调用 meta 生成
-    const metaHtml = await generateMeta();
-
     doc = addNotranslateClass(doc);
     doc = loadImageSrcFromDataSrc(doc);
-    const content = await generateReaderContent(doc);
-    
-    const readerContent = removeAttributesFromParagraphs(metaHtml + content);
-    return readerContent;
+    const readerContent = await generateReaderContent(doc);
+    const cleanContent = removeAttributesFromParagraphs(readerContent);
+    return cleanContent;
   },
 
   async translateDocument(doc, targetLang) {

@@ -1,35 +1,40 @@
-function getCurrentAnchor(container) {
-  const anchors = container.querySelectorAll('[z]');
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+function getCurrentAnchor(iframeDoc) {
+  const anchors = iframeDoc.querySelectorAll('[z]');
+  const scrollTop = iframeDoc.defaultView.pageYOffset || iframeDoc.documentElement.scrollTop;
+  
   let currentAnchor = anchors[0];
+  let minDistance = Math.abs(anchors[0].offsetTop - scrollTop);
 
-  anchors.forEach((anchor) => {
-    const rect = anchor.getBoundingClientRect();
-    if (rect.top <= scrollTop && rect.bottom > scrollTop) {
-      currentAnchor = anchor;
+  for (let i = 1; i < anchors.length; i++) {
+    const distance = Math.abs(anchors[i].offsetTop - scrollTop);
+    if (distance < minDistance) {
+      minDistance = distance;
+      currentAnchor = anchors[i];
     }
-  });
+  }
 
   return currentAnchor;
 }
 
-function scrollToTranslatedAnchor(sourceContainer, targetContainer) {
-  const currentAnchor = getCurrentAnchor(sourceContainer);
+function scrollToTranslatedAnchor(iframeDoc, customDivWrapper) {
+  const currentAnchor = getCurrentAnchor(iframeDoc);
   const anchorId = currentAnchor.getAttribute('z');
-  const translatedAnchor = targetContainer.querySelector(`[z="${anchorId}"]`);
+  const translatedAnchor = customDivWrapper.querySelector(`[z="${anchorId}"]`);
 
   if (translatedAnchor) {
     translatedAnchor.scrollIntoView();
   }
+
+  const scrollTop = iframeDoc.documentElement.scrollTop || iframeDoc.body.scrollTop;
+
+  // 检测滚动到顶部
+  if (scrollTop <= 100) {
+    customDivWrapper.scrollTop = 0;
+  }
 }
 
-export function addScrollListener() {
-  const sourceContainer = document.getElementById('original-content-wrapper');
-  const targetContainer = document.getElementById('custom-div-wrapper');
-
-  sourceContainer.addEventListener('scroll', () => {
-    scrollToTranslatedAnchor(sourceContainer, targetContainer);
+export function addScrollListener(iframeDoc, customDivWrapper) {
+  iframeDoc.addEventListener('scroll', () => {
+    scrollToTranslatedAnchor(iframeDoc, customDivWrapper);
   });
-
-  console.log(`scroll listener added`);
 }

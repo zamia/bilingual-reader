@@ -25,7 +25,7 @@ function changeIcon(tabId, options = { reset: false }) {
 chrome.action.onClicked.addListener(async (tab) => {
   console.log(`extension icon clicked, current tab id: ${tab.id}`);
 
-  chrome.tabs.sendMessage(tab.id, {
+  await chrome.tabs.sendMessage(tab.id, {
     action: "splitLayout",
     tabId: tab.id,
   });
