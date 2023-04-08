@@ -103,15 +103,74 @@ function appendToElement(element, className, innerHTML) {
   element.appendChild(div);
 };
 
+function extractAttributes(htmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  const elements = doc.querySelectorAll("a, img, video, figure, source");
+  const attributes = {};
+  const attributeNames = ["src", "srcset", "data-src", "href", "sizes"];
+
+  elements.forEach((element, index) => {
+    const tagName = element.tagName.toLowerCase();
+    const id = `${tagName}-${index}`;
+    element.setAttribute("data-attr-id", id);
+    const attrInfo = {
+      id,
+      tagName,
+    };
+
+    attributeNames.forEach((attrName) => {
+      if (element.hasAttribute(attrName)) {
+        attrInfo[attrName] = element.getAttribute(attrName);
+        element.removeAttribute(attrName);
+      }
+    });
+
+    attributes[id] = attrInfo;
+  });
+
+  return {
+    updatedHtmlString: doc.body.innerHTML,
+    attributes,
+  };
+}
+
+function insertAttributes(translatedHtmlString, attributes) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(translatedHtmlString, "text/html");
+
+  const supportedTags = ["a", "img", "video", "figure", "source"];
+  const supportedAttributes = ["src", "srcset", "data-src", "href", "sizes"];
+
+  const nodes = doc.querySelectorAll(supportedTags.join(', '));
+  nodes.forEach((node) => {
+    const id = node.getAttribute("data-attr-id");
+
+    if (id && attributes[id]) {
+      supportedAttributes.forEach((attribute) => {
+        if (attributes[id][attribute]) {
+          node.setAttribute(attribute, attributes[id][attribute]);
+        }
+      });
+      node.removeAttribute("data-attr-id");
+    }
+  });
+  
+  return doc.body.innerHTML;
+}
+
+
 async function parseContent(document) {
   console.log(`parseCOntent called`);
 
   // clone document 出来分析内容
   const doc = document.cloneNode(true);
   const readerContent = await parser.parseDocument(doc);
+  const { updatedHtmlString: updatedReaderContent, attributes } = extractAttributes(readerContent);
 
   const targetLang = await OptionsUtil.getUserLanguage();
-  const translatedContent = await parser.translateDocument(readerContent, targetLang); 
+  let translatedContent = await parser.translateDocument(updatedReaderContent, targetLang); 
+  translatedContent = insertAttributes(translatedContent, attributes);
   
   return { readerContent, translatedContent };
 }

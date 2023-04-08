@@ -10,18 +10,6 @@ function addNotranslateClass(element) {
   return element;
 }
 
-function loadImageSrcFromDataSrc(element) {
-  const images = element.getElementsByTagName('img');
-  for (let i = 0; i < images.length; i++) {
-    const img = images[i];
-    const dataSrc = img.getAttribute('data-src');
-    if (dataSrc) {
-      img.setAttribute('src', dataSrc);
-    }
-  }
-  return element;
-}
-
 function removeAttributesFromParagraphs(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -56,10 +44,46 @@ async function generateReaderContent(doc) {
   return readerContent;
 }
 
+function unescapeHTML(htmlString) {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = htmlString;
+  return tempDiv.textContent || tempDiv.innerText || "";
+}
+
+function updateLazyLoadedImages(doc) {
+  const imgElements = doc.querySelectorAll("img");
+
+  imgElements.forEach((img) => {
+    // 检查 img 的 src 是否为 1x1 透明 GIF
+    if (
+      img.src ===
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+    ) {
+      const nextSibling = img.nextElementSibling;
+      // 检查 img 后面是否紧跟着 noscript 标签
+      if (nextSibling && nextSibling.tagName.toLowerCase() === "noscript") {
+        const parser = new DOMParser();
+        const noscriptDoc = parser.parseFromString(
+          unescapeHTML(nextSibling.innerHTML),
+          "text/html"
+        );
+        const noscriptImg = noscriptDoc.querySelector("img");
+        // 检查 noscript 标签内是否包含一个 img 元素
+        if (noscriptImg) {
+          img.src = noscriptImg.src;
+          img.srcset = noscriptImg.srcset;
+        }
+      }
+    }
+  });
+  
+  return doc;
+}
+
 const parser = {
   async parseDocument(doc) {
     doc = addNotranslateClass(doc);
-    doc = loadImageSrcFromDataSrc(doc);
+    doc = updateLazyLoadedImages(doc);
     const readerContent = await generateReaderContent(doc);
     const cleanContent = removeAttributesFromParagraphs(readerContent);
     return cleanContent;

@@ -4,6 +4,7 @@
 # production
 /build
 /build.zip
+/tmp
 
 # misc
 .DS_Store
