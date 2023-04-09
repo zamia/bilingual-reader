@@ -3,6 +3,7 @@ import { addSelectionListener } from "./selection.js";
 import parser from "./parser.js";
 import { addControlsListener, updateFontSize } from "./controls.js";
 import OptionsUtil from "./options-util.js";
+import psl from 'psl';
 
 function showLoading() {
   const loadingOverlay = document.querySelector('#loading-overlay');
@@ -16,7 +17,6 @@ function hideLoading() {
 function createCustomWrapper() {
   const customDivWrapper = document.createElement("div");
   customDivWrapper.id = "custom-div-wrapper";
-  customDivWrapper.style.overflow = "auto";
   
   const customControls = document.createElement("div");
   customControls.id = "custom-controls";
@@ -64,12 +64,21 @@ function createCustomWrapper() {
 function createOriginalWrapper() {
   const originalContentWrapper = document.createElement("div");
   originalContentWrapper.id = "original-content-wrapper";
+  
+  const originalSubWrapper = document.createElement('div');
+  originalSubWrapper.id = "original-sub-wrapper";
 
   // 将 body 中的所有子节点追加到新创建的 originalContentWrapper 中
   while (document.body.firstChild) {
-    originalContentWrapper.appendChild(document.body.firstChild);
+    originalSubWrapper.appendChild(document.body.firstChild);
   }
+  
+  // 把 hostname 添加到 body 的 className 中去, 未来可以根据域名进行定制 css
+  const currentUrl = new URL(window.location.href);
+  const domain = psl.get(currentUrl.hostname);
+  document.body.classList.add(domain);
 
+  originalContentWrapper.appendChild(originalSubWrapper);
   return originalContentWrapper;
 }
 

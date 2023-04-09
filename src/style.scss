@@ -145,10 +145,7 @@ $content-max-width: 700px;
     }
   }
 
-  .highlighted {
-    background-color: rgba(255, 255, 0, 0.3);
-    border-radius: 4px;
-  }
+
 }
 
 #custom-controls {
@@ -203,4 +200,11 @@ $content-max-width: 700px;
   text-align: center;
   color: $light-color;
   margin: 30px auto 30px;
+}
+
+.split-reader-active {
+  .split-reader-highlighted {
+    background-color: rgba(255, 255, 0, 0.3);
+    border-radius: 4px;
+  }
 }

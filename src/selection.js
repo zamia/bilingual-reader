@@ -1,3 +1,5 @@
+const HighlightClassName = "split-reader-highlighted";
+
 function highlightTranslationOnSelection(sourceContainer, customDivWrapper) {
   const selection = window.getSelection();
   if (selection.isCollapsed) {
@@ -17,27 +19,35 @@ function highlightTranslationOnSelection(sourceContainer, customDivWrapper) {
   if (!originalParagraph) return;
 
   const anchorId = originalParagraph.getAttribute("z");
+ 
+  let highlightContainer;
+  if (sourceContainer.contains(originalParagraph)) {
+    highlightContainer = customDivWrapper;
+  } else {
+    highlightContainer = sourceContainer;
+  }
 
-  const translatedParagraph = customDivWrapper.querySelector(
-    `#custom-div [z="${anchorId}"]`
+  const translatedParagraph = highlightContainer.querySelector(
+    `[z="${anchorId}"]`
   );
 
   if (!translatedParagraph) return;
 
   // 为高亮段落添加一个特定的类名，例如 'highlighted'
-  translatedParagraph.classList.add("highlighted");
+  translatedParagraph.classList.add(HighlightClassName);
 }
 
-function clearHighlight(customDivWrapper) {
-  const highlighted = customDivWrapper.querySelector("#custom-div .highlighted");
+function clearHighlight(container) {
+  const highlighted = container.querySelector(`.${HighlightClassName}`);
   if (highlighted) {
-    highlighted.classList.remove("highlighted");
+    highlighted.classList.remove(HighlightClassName);
   }
 }
 
 // 添加事件监听器
 export function addSelectionListener(sourceContainer, customDivWrapper) {
-  sourceContainer.addEventListener("selectionchange", () => {
+  document.addEventListener("selectionchange", () => {
+    clearHighlight(sourceContainer);
     clearHighlight(customDivWrapper);
     highlightTranslationOnSelection(sourceContainer, customDivWrapper);
   });
