@@ -85,6 +85,7 @@ const parser = {
     doc = addNotranslateClass(doc);
     doc = updateLazyLoadedImages(doc);
     const readerContent = await generateReaderContent(doc);
+    console.log(readerContent);
     const cleanContent = removeAttributesFromParagraphs(readerContent);
     return cleanContent;
   },

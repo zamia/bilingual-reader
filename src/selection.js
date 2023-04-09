@@ -1,5 +1,5 @@
-function highlightTranslationOnSelection(iframeDoc, customDivWrapper) {
-  const selection = iframeDoc.getSelection();
+function highlightTranslationOnSelection(sourceContainer, customDivWrapper) {
+  const selection = window.getSelection();
   if (selection.isCollapsed) {
     clearHighlight(customDivWrapper);
     return;
@@ -36,9 +36,9 @@ function clearHighlight(customDivWrapper) {
 }
 
 // 添加事件监听器
-export function addSelectionListener(iframeDoc, customDivWrapper) {
-  iframeDoc.addEventListener("selectionchange", () => {
+export function addSelectionListener(sourceContainer, customDivWrapper) {
+  sourceContainer.addEventListener("selectionchange", () => {
     clearHighlight(customDivWrapper);
-    highlightTranslationOnSelection(iframeDoc, customDivWrapper);
+    highlightTranslationOnSelection(sourceContainer, customDivWrapper);
   });
 }

@@ -1,6 +1,6 @@
-function getCurrentAnchor(iframeDoc) {
-  const anchors = iframeDoc.querySelectorAll('[z]');
-  const scrollTop = iframeDoc.defaultView.pageYOffset || iframeDoc.documentElement.scrollTop;
+function getCurrentAnchor(sourceContainer) {
+  const anchors = sourceContainer.querySelectorAll('[z]');
+  const scrollTop = document.defaultView.pageYOffset || sourceContainer.scrollTop;
   
   let currentAnchor = anchors[0];
   let minDistance = Math.abs(anchors[0].offsetTop - scrollTop);
@@ -16,8 +16,8 @@ function getCurrentAnchor(iframeDoc) {
   return currentAnchor;
 }
 
-function scrollToTranslatedAnchor(iframeDoc, customDivWrapper) {
-  const currentAnchor = getCurrentAnchor(iframeDoc);
+function scrollToTranslatedAnchor(sourceContainer, customDivWrapper) {
+  const currentAnchor = getCurrentAnchor(sourceContainer);
   const anchorId = currentAnchor.getAttribute('z');
   const translatedAnchor = customDivWrapper.querySelector(`[z="${anchorId}"]`);
 
@@ -25,7 +25,7 @@ function scrollToTranslatedAnchor(iframeDoc, customDivWrapper) {
     translatedAnchor.scrollIntoView();
   }
 
-  const scrollTop = iframeDoc.documentElement.scrollTop || iframeDoc.body.scrollTop;
+  const scrollTop = document.defaultView.pageYOffset || sourceContainer.scrollTop;
 
   // 检测滚动到顶部
   if (scrollTop <= 100) {
@@ -33,8 +33,8 @@ function scrollToTranslatedAnchor(iframeDoc, customDivWrapper) {
   }
 }
 
-export function addScrollListener(iframeDoc, customDivWrapper) {
-  iframeDoc.addEventListener('scroll', () => {
-    scrollToTranslatedAnchor(iframeDoc, customDivWrapper);
+export function addScrollListener(sourceContainer, customDivWrapper) {
+  sourceContainer.addEventListener('scroll', () => {
+    scrollToTranslatedAnchor(sourceContainer, customDivWrapper);
   });
 }

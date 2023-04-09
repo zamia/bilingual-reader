@@ -17,28 +17,28 @@ body.split-reader-active {
   height: 100%;
   overflow: hidden;
   z-index: 99999999999;
-}
 
-#original-content-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  height: 100%;
-  border: none;
-  // background-color: white;
-}
+  #original-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    height: 100%;
+    border: none;
+    transform: translate3d(0, 0, 0);
+    position: relative;
+  }
 
-#custom-div-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  height: 100%;
-}
-
-#custom-div-wrapper {
-  padding: 100px 0 200px;
-  background-color: white;
-  background-color: #f9f9f9;
+  #custom-div-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    height: 100%;
+    padding: 100px 0 200px;
+    background-color: white;
+    background-color: #f9f9f9;
+  }
 }
 
 #split-view-container.hide {
-  display: none;
+  #custom-div-wrapper {
+    display: none;
+  }
 }

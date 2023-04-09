@@ -62,20 +62,13 @@ function createCustomWrapper() {
 }
 
 function createOriginalWrapper() {
-  const originalContentWrapper = document.createElement("iframe");
+  const originalContentWrapper = document.createElement("div");
   originalContentWrapper.id = "original-content-wrapper";
-  originalContentWrapper.src = window.location.href;
-  originalContentWrapper.style.overflow = "auto";
-  
-  const originBodyElement = document.body;
-  originBodyElement.classList.add("split-reader-active")
-  
-  originalContentWrapper.addEventListener('load', async () => {
-    console.log("iframe load finished!");
-    originalContentWrapper.classList.add("split-translator-loaded");
-    
-    
-  });
+
+  // 将 body 中的所有子节点追加到新创建的 originalContentWrapper 中
+  while (document.body.firstChild) {
+    originalContentWrapper.appendChild(document.body.firstChild);
+  }
 
   return originalContentWrapper;
 }
@@ -163,11 +156,10 @@ function insertAttributes(translatedHtmlString, attributes) {
 }
 
 
-async function parseContent(document) {
+async function parseContent() {
   console.log(`parseCOntent called`);
 
   let doc = document.cloneNode(true);
-  doc = addAnchorsToElements(doc);
   const readerContent = await parser.parseDocument(doc);
   
   // 保存一些标签属性，节省翻译的字数
@@ -182,32 +174,9 @@ async function parseContent(document) {
   return { readerContent, translatedContent };
 }
 
-function setBackgroundColor(iframeDoc) {
-  // 在 iframe 中获取 body 元素
-  const iframeBody = iframeDoc.body;
 
-  // 获取 body 的背景颜色
-  const bodyBackgroundColor = window.getComputedStyle(iframeBody).getPropertyValue('background-color');
-
-  // 如果 body 的背景颜色是透明或未设置，则设置为白色
-  if (bodyBackgroundColor === 'rgba(0, 0, 0, 0)' || bodyBackgroundColor === 'transparent') {
-    iframeBody.style.backgroundColor = 'white';
-  }
-}
-
-async function realParseAndFill(doc) {
-  showLoading();
-  const { readerContent, translatedContent } = await parseContent(doc);
-
-  const customDiv = document.getElementById("custom-div");
-  appendToElement(customDiv, "translated-content-wrapper", translatedContent);
-    
-  hideLoading();
-}
 
 const pageLayoutUtil = {
-
-  
   async createLayout() {
       // 构建 layout
     const splitViewContainer = createSplitViewContainer(
@@ -221,31 +190,26 @@ const pageLayoutUtil = {
     updateFontSize(userFontSize);
 
     // for custom-div controls
+    const originalContentWrapper = document.getElementById('original-content-wrapper');
+    const customDivWrapper = document.getElementById('custom-div-wrapper');
+    // addAnchorsToElements(originalContentWrapper);
     addControlsListener();
+    addScrollListener(originalContentWrapper, customDivWrapper);
+    addSelectionListener(originalContentWrapper, customDivWrapper);
   },
   
   async parseAndFill() {
-    console.log("parseAndFill was called!");
 
-    await realParseAndFill(document);
+    const originalContentWrapper = document.getElementById('original-content-wrapper');
+    addAnchorsToElements(originalContentWrapper);
 
-    // 定义检查函数
-    const iframe = document.getElementById("original-content-wrapper");
-    async function checkIframeLoaded() {
-      if (iframe.classList.contains('split-translator-loaded')) {
-        // 清除定时器
-        clearInterval(checkInterval);
-        
-        // iframe 加载完成，执行后续操作
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
-        addScrollListener(iframeDoc, document.getElementById('custom-div-wrapper'));
-        addSelectionListener(iframeDoc, document.getElementById('custom-div-wrapper'));
-        setBackgroundColor(iframeDoc);
-        addAnchorsToElements(iframeDoc);
-      }
-    }
-    // 设置定时器，每隔 300 毫秒检查一次
-    const checkInterval = setInterval(checkIframeLoaded, 300);
+    showLoading();
+    const { readerContent, translatedContent } = await parseContent();
+
+    const customDiv = document.getElementById("custom-div");
+    appendToElement(customDiv, "translated-content-wrapper", translatedContent);
+      
+    hideLoading();
   },
   
   async clearParsedContent() {
@@ -260,8 +224,7 @@ const pageLayoutUtil = {
       container.classList.remove("hide");
     }
 
-    const body = document.body;
-    body.classList.add("split-reader-active");
+    document.body.classList.add("split-reader-active");
   },
 
   hideSplit() {
@@ -269,8 +232,7 @@ const pageLayoutUtil = {
     if (container) {
       container.classList.add("hide");
     }
-    const body = document.body;
-    body.classList.remove("split-reader-active");
+    document.body.classList.remove("split-reader-active");
   },
 };
 
