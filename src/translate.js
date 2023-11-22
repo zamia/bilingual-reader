@@ -10,15 +10,15 @@ function findSafeSplitIndex(htmlString, maxLength) {
   let openTag = false;
 
   for (let i = 0; i < htmlString.length; i++) {
-    if (htmlString[i] === '<') {
+    if (htmlString[i] === "<") {
       openTag = true;
-    } else if (htmlString[i] === '>') {
+    } else if (htmlString[i] === ">") {
       openTag = false;
     }
 
     if (i === maxLength) {
       if (openTag) {
-        while (htmlString[i] !== '>') {
+        while (htmlString[i] !== ">") {
           i--;
         }
       }
@@ -51,38 +51,42 @@ async function translate(text, options = {}) {
 
     const response = await axios({
       baseURL: azureEndpoint,
-      url: '/translate',
-      method: 'post',
+      url: "/translate",
+      method: "post",
       headers: {
         // 'Ocp-Apim-Subscription-Key': azureKey,
         // 'Ocp-Apim-Subscription-Region': azureLocation,
-        'Content-type': 'application/json',
-        "authorization": `Bearer ${authCode}`
+        "Content-type": "application/json",
+        authorization: `Bearer ${authCode}`,
       },
       params: {
-        'api-version': '3.0',
-        'textType': 'html',
-        'to': [options.targetLang || 'zh-CN'],
+        "api-version": "3.0",
+        textType: "html",
+        to: options.targetLang || "zh-CN",
       },
-      data: [{
-        'text': text
-      }],
-      responseType: 'json'
+      data: [
+        {
+          text: text,
+        },
+      ],
+      responseType: "json",
     });
 
     return response.data[0].translations[0].text;
   } catch (error) {
     console.log(error);
   }
-};
+}
 
 export const AzureTranslator = {
   async translateHtml(htmlString, options) {
     const chunks = splitHtmlString(htmlString, MaxLength);
-    const translatedChunks = await Promise.all(chunks.map(async (chunk) => {
-      return await translate(chunk, options); // 假设 translate 是你的翻译函数
-    }));
+    const translatedChunks = await Promise.all(
+      chunks.map(async (chunk) => {
+        return await translate(chunk, options); // 假设 translate 是你的翻译函数
+      })
+    );
 
-    return translatedChunks.join('');
-  }
+    return translatedChunks.join("");
+  },
 };
